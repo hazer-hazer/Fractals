@@ -9,34 +9,41 @@ const dpi = window.devicePixelRatio
 cvs.setAttribute('height', String(style_height * dpi))
 cvs.setAttribute('width', String(style_width * dpi))
 
-const drawDot = (x, y, color = '#000000') => {
-    ctx.fillStyle = color
-    ctx.fillRect(x, y, 1, 1)
+const isInSet = (x, y) => {
+    let re = x
+    let im = y
+    const maxIter = 100
+
+    for (let i = 0; i < maxIter; i++) {
+        let tempRe = re * re - im * im + x
+        let tempIm = 2 * re * im + y
+        re = tempRe
+        im = tempIm
+
+        if (re * im > 5) {
+            return [i / maxIter * 360, re, im]
+        }
+    }
+    return [0, 0, 0]
 }
 
+const abs = (x, y) => Math.sqrt(Math.pow(x, 2) - Math.pow(y, 2))
+
 const mandelbrot = () => {
-    const epsilon = 0.01
-    const maxIter = 10
-    const maxColors = 256
+    const magniFactor = 200
+    let panX = 5
+    let panY = 2
 
-    let z
-    let c
-    let iter
-
-    ctx.translate(cvs.width / 2, cvs.height / 2)
-
-    for (let x = -2; x <= 2; x += epsilon) {
-        for (let y = -2; y <= 2; y += epsilon) {
-            iter = 0
-            c = new Complex(x, y)
-            z = new Complex(0, 0)
-            while (z.abs() < 2 && iter < maxIter) {
-                console.log(z.abs())
-                z = z.mul(z).add(c)
-                console.log(z)
-                iter++
+    for (let x = 0; x < cvs.width; x++) {
+        for (let y = 0; y < cvs.height; y++) {
+            let [lightness, re, im] = isInSet(x / magniFactor - panX, y / magniFactor - panY)
+            if (lightness === 0) {
+                ctx.fillStyle = '#000'
+                ctx.fillRect(x, y, 1, 1)
+            } else {
+                ctx.fillStyle = `hsl(${1 / abs(re, im) * 360}, 100%, ${lightness}%)`
+                ctx.fillRect(x, y, 1, 1)
             }
-            drawDot(x * 100, y * 100)
         }
     }
 }
